@@ -1,0 +1,295 @@
+<html lang="en">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      #background-url {
+        width: 100%;
+      }
+
+      #drawflow {
+        width: 100%;
+        height: 100%;
+      }
+
+      #menu {
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        bottom: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        width: 200px;
+        border-radius: 10px;
+        padding: 10px;
+        background: white;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #menu button {
+        display: block;
+        width: 100%;
+      }
+
+      .drawflow .drawflow-node.incoming,
+      .incoming {
+        background: lightgray;
+      }
+
+      .drawflow .drawflow-node.outgoing,
+      .outgoing {
+        background: lightgreen;
+      }
+
+      .drawflow .drawflow-node.choice,
+      .choice {
+        background: lightblue;
+      }
+
+      .drawflow .drawflow-node.option,
+      .option {
+        background: blue;
+        color: white;
+      }
+
+      .drawflow .drawflow-node.selected {
+        border-color: red;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      }
+
+      button.option[disabled] {
+        opacity: 0.5;
+      }
+
+      .drawflow .drawflow-node .input {
+        background: white;
+      }
+    </style>
+    <title>Chat generator</title>
+  </head>
+  <body>
+    <div id="drawflow"></div>
+    <div id="menu">
+      <button class="incoming" onclick="incomingMessageNode()">Incoming</button>
+      <button class="outgoing" onclick="outgoingMessageNode()">Outgoing</button>
+      <button class="choice" onclick="choiceNode()">Choice</button>
+      <button class="option" disabled id="option-button" onclick="optionNode()">Add option</button>
+      <div style="flex: 1"></div>
+      <select oninput="SELECTED_TEMPLATE = {1: CONVERSATION_TEMPLATE}[this.value]">
+        <option value="1">Template 1</option>
+      </select>
+      <label>Personal image <input type="url" id="background-url" /></label>
+      <button onclick="window.confirm('Are you sure?') ? clearFlow() : void 0">
+        Clear conversation
+      </button>
+      <button onclick="runExport()">Export</button>
+    </div>
+    <script>
+      let SELECTED_TEMPLATE = null;
+      const id = document.getElementById('drawflow');
+      const editor = new Drawflow(id);
+      editor.start();
+
+      function getOffset() {
+        const offset = {
+          top: 300 + Math.random() * 100 - 50 + OFFSET.top,
+          left: -150 + Math.random() * 100 - 50 + OFFSET.left
+        };
+        if (editor.node_selected) {
+          offset.top = parseInt(editor.node_selected.style.top, 10);
+          offset.left = parseInt(editor.node_selected.style.left, 10);
+        }
+        return offset;
+      }
+
+      function incomingMessageNode() {
+        const html = `<div><div>Incoming message</div><input type="text" df-message></div>`;
+        const data = {message: ''};
+        const offset = getOffset();
+        editor.addNode('', 1, 1, offset.left + 300, offset.top, 'incoming', data, html);
+      }
+
+      function outgoingMessageNode() {
+        const html = `<div><div>Outgoing message</div><input type="text" df-message></div>`;
+        const data = {message: ''};
+        const offset = getOffset();
+
+        editor.addNode('', 1, 1, offset.left + 300, offset.top, 'outgoing', data, html);
+      }
+
+      function choiceNode() {
+        const html = `<div>Choice</div>`;
+        const data = {};
+        const offset = getOffset();
+
+        const x = offset.left + 300;
+        const y = offset.top;
+        const id = editor.addNode('', 1, 1, x, y, 'choice', data, html);
+
+        for (let i = 0; i < 3; i++) {
+          addChoice(id, x + 300, y + (i - 1) * 200);
+        }
+      }
+
+      function optionNode() {
+        addChoice(SELECTED.id, SELECTED.pos_x + 300, SELECTED.pos_y + Math.random() * 50 - 25);
+      }
+
+      function addChoice(parent, offsetX = 150, offsetY = 300) {
+        const html = `<div><div>Option</div><label>Text <input type="text" df-text></label>
+      <label>Trigger <input type="text" df-trigger></label></div>`;
+        const data = {text: '', trigger: ''};
+        const id = editor.addNode('', 1, 1, offsetX, offsetY, 'option', data, html);
+
+        if (parent) {
+          editor.addConnection(parent, id, 'output_1', 'input_1');
+        }
+      }
+
+      function saveFlow() {
+        // convert string to base64
+        const e = editor.export();
+        window.location.hash = btoa(JSON.stringify(e));
+      }
+
+      function clearFlow() {
+        editor.clear();
+        window.location.hash = '';
+      }
+
+      function downloadHTML(rendered) {
+        const blob = new Blob([rendered], {type: 'text/html'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'conversation.html';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function runExport() {
+        const export1 = editor.export();
+        const exp = export1.drawflow.Home.data;
+
+        let START = null;
+        let script = '';
+
+        Object.entries(exp).forEach(([id, data]) => {
+          if (data.class === 'incoming') {
+            script += `const n_${id} = new IncomingMessageNode('${data.data.message}');\n`;
+          }
+          if (data.class === 'outgoing') {
+            script += `const n_${id} = new OutgoingMessageNode('${data.data.message}');\n`;
+          }
+          if (data.class === 'option') {
+            script += `const n_${id} = new Choice('${data.data.text}', '${data.data.trigger}');\n`;
+          }
+          if (data.class === 'choice') {
+            script += `const n_${id} = new ChoicesMessageNode([]);\n`;
+          }
+
+          if (data.inputs.input_1.connections.length === 0) {
+            if (START) throw new Error('Multiple start nodes');
+            START = id;
+          }
+        });
+
+        script += '\n';
+
+        Object.entries(exp).forEach(([id, data]) => {
+          const connections = data.outputs.output_1.connections;
+          if (connections.length <= 0) {
+            return;
+          }
+          if (data.class === 'choice') {
+            script += `n_${id}.choices = [${connections.map((c) => `n_${c.node}`).join(', ')}];\n`;
+          } else {
+            script += `n_${id}.next = n_${connections[0].node};\n`;
+          }
+        });
+
+        script += `\nSTART = n_${START};\n`;
+
+        const triggers = Object.values(exp)
+          .filter((n) => n.class === 'option')
+          .map((n) => n.data.trigger)
+          .filter((t) => t)
+          .map((t) => `<button buttontrigger="${t}"></button>`)
+          .join('\n');
+
+        console.log(triggers);
+
+        const rendered = SELECTED_TEMPLATE(script, triggers);
+        // download rendered as html file
+        downloadHTML(rendered);
+      }
+
+      let SELECTED = null;
+      editor.on('nodeSelected', (node) => {
+        SELECTED = editor.getNodeFromId(node);
+        document.getElementById('option-button').disabled = SELECTED.class !== 'choice';
+      });
+      editor.on('nodeUnselected', () => {
+        SELECTED = null;
+        document.getElementById('option-button').disabled = true;
+      });
+
+      editor.on('nodeCreated', saveFlow);
+      editor.on('nodeRemoved', saveFlow);
+      editor.on('nodeMoved', saveFlow);
+      editor.on('nodeDataChanged', saveFlow);
+      editor.on('connectionCreated', saveFlow);
+      editor.on('connectionRemoved', saveFlow);
+
+      let OFFSET = {
+        top: 0,
+        left: 0
+      };
+
+      editor.on('translate', ({x, y}) => {
+        OFFSET = {top: -y, left: -x};
+      });
+
+      function loadFlow() {
+        const b64 = window.location.hash.substring(1);
+        const json = atob(b64);
+        editor.import(JSON.parse(json));
+      }
+
+      if (window.location.hash) {
+        loadFlow();
+      }
+    </script>
+    <script>
+      // fetch chat.html
+      fetch('chat.html')
+        .then((response) => response.text())
+        .then((html) => {
+          // inject html into chat.html
+          CONVERSATION_TEMPLATE = (script, triggers) => {
+            const bg =
+              document.getElementById('background-url').value || 'https://picsum.photos/400/1000';
+
+            let s = html.replace('//REPLACE HERE', script);
+            s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.hash} -->`);
+            s = s.replace(
+              '/* BACKGROUND HERE */',
+              `background: url(${bg}) no-repeat center center;`
+            );
+            if (triggers) {
+              s = s.replace('<!-- TRIGGERS HERE -->', triggers);
+            }
+            return s;
+          };
+          SELECTED_TEMPLATE = CONVERSATION_TEMPLATE;
+        });
+    </script>
+  </body>
+</html>

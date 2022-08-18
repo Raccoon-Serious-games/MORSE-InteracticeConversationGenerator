@@ -1,0 +1,274 @@
+<html>
+  <!-- HASH HERE -->
+  <head>
+    <link
+      id="page-builder-bootstrap-style"
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+    <script
+      id="page-builder-popper-script"
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      id="page-builder-jquery"
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      id="page-builder-bootstrap-script"
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+      crossorigin="anonymous"
+    ></script>
+    <style id="builder-custom-style-tag">
+      body {
+        height: 100%;
+        display: flex;
+      }
+
+      .left {
+        flex: 1;
+        background: lightblue;
+        min-width: 300px;
+
+        /* BACKGROUND HERE */
+        background-size: cover;
+      }
+
+      .right {
+        flex: 3;
+        background: lightgray;
+      }
+
+      .chat-wrapper {
+        height: 100%;
+        overflow-y: scroll;
+        box-shadow: -10px 0 10px rgb(0 0 0 / 27%);
+      }
+
+      .chat {
+        padding: 10px;
+      }
+
+      .message,
+      .choices {
+        margin-bottom: 10px;
+        clear: both;
+        width: 80%;
+        animation: fadeIn 0.5s;
+      }
+
+      .message {
+        border-radius: 10px;
+        padding: 10px;
+        background: #f5f5f5;
+      }
+
+      .message.outgoing {
+        background: lightgreen;
+      }
+
+      .outgoing,
+      .choices {
+        float: right;
+      }
+
+      .incoming {
+        float: left;
+      }
+
+      .choices {
+        display: grid;
+        grid-gap: 5px;
+      }
+
+      .choice {
+        all: unset;
+        border-radius: 10px;
+        padding: 10px;
+        background: blue;
+        color: white;
+        text-align: center;
+        outline: none !important;
+      }
+
+      .choice:hover {
+        background: lightblue;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+    <style id="page-builder-hover-style">
+      [buttontrigger] {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="triggers" style="display: none">
+      <button buttontrigger="end-of-chat"></button>
+      <!-- TRIGGERS HERE -->
+    </div>
+    <div class="left"></div>
+    <div class="right">
+      <div class="chat-wrapper">
+        <div class="chat"></div>
+      </div>
+    </div>
+    <script>
+      let CHAT;
+      let CHOICES;
+      const CHAT_DELAY = 2000;
+    </script>
+    <script>
+      class IncomingMessageNode {
+        next = null;
+        constructor(message) {
+          this.message = message;
+        }
+      }
+
+      class OutgoingMessageNode {
+        next = null;
+
+        constructor(message) {
+          this.message = message;
+        }
+      }
+
+      class Choice {
+        next = null;
+
+        constructor(message, trigger = null) {
+          this.message = message;
+          this.trigger = trigger;
+        }
+
+        onClick() {
+          if (this.trigger) $(`button[buttontrigger="${this.trigger}"]`).trigger('click');
+
+          $('.chat').children().last().remove();
+          CHAT.append(`<div class="message outgoing">${this.message}</div>`);
+          setTimeout(() => {
+            CHAT.current = this;
+            CHAT.step();
+          }, CHAT_DELAY);
+        }
+      }
+
+      class ChoicesMessageNode {
+        /**
+         *
+         * @param {Choice[]} choices
+         */
+        constructor(choices) {
+          this.choices = choices;
+        }
+      }
+    </script>
+    <script>
+      class Chat {
+        start = null;
+        current = null;
+
+        constructor(start) {
+          this.start = start;
+          this.current = start;
+        }
+
+        startChat() {
+          this.current = this.start;
+          this.appendCurrentToChat();
+        }
+
+        renderCurrentMessage() {
+          if (this.current instanceof IncomingMessageNode) {
+            return `<div class="message incoming">${this.current.message}</div>`;
+          } else if (this.current instanceof OutgoingMessageNode) {
+            return `<div class="message outgoing">${this.current.message}</div>`;
+          } else if (this.current instanceof ChoicesMessageNode) {
+            CHOICES = this.current.choices;
+            let choices = this.current.choices
+              .map((choice, i) => {
+                return `<button onclick="CHOICES[${i}].onClick()" class="choice">${choice.message}</button>`;
+              })
+              .join('');
+            return `<div class="choices">${choices}</div>`;
+          } else {
+            return '';
+          }
+        }
+
+        step() {
+          if (!(this.current instanceof ChoicesMessageNode)) {
+            if (!this.current.next) {
+              this.end();
+              return;
+            }
+            this.current = this.current.next;
+            this.appendCurrentToChat();
+          }
+        }
+
+        end() {
+          window.alert('End of chat');
+          $(`button[buttontrigger="end-of-chat"]`).trigger('click');
+        }
+
+        appendCurrentToChat() {
+          this.append(this.renderCurrentMessage());
+          setTimeout(() => {
+            this.step();
+          }, CHAT_DELAY);
+        }
+
+        append(message) {
+          $('.chat').append(message);
+          $('.chat').scrollTop($('.chat')[0].scrollHeight);
+        }
+      }
+    </script>
+    <script>
+      // Setup nodes
+      const m1 = new IncomingMessageNode('Hello');
+      const m2 = new OutgoingMessageNode('Hello');
+      const m3 = new IncomingMessageNode('How are you?');
+      const c1 = new Choice('Good', 'good');
+      const c2 = new Choice('Bad', 'bad');
+      const m4 = new ChoicesMessageNode([c1, c2]);
+      const m5 = new IncomingMessageNode('Good');
+      const m6 = new IncomingMessageNode('Bad');
+      const m7 = new OutgoingMessageNode('Goodbye');
+
+      // Link nodes
+      m1.next = m2;
+      m2.next = m3;
+      m3.next = m4;
+      c1.next = m5;
+      c2.next = m6;
+      m5.next = m6.next = m7;
+
+      let START = m1;
+
+      //REPLACE HERE
+
+      CHAT = new Chat(START);
+      CHAT.startChat();
+    </script>
+  </body>
+</html>
