@@ -338,7 +338,7 @@
                     document.getElementById('background-url').value || 'https://picsum.photos/400/1000';
 
                 let s = html.replace('//REPLACE HERE', script);
-                s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.hash} -->`);
+                s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
                 s = s.replace(
                     '/* BACKGROUND HERE */',
                     `background: url(${bg}) no-repeat center center;`
