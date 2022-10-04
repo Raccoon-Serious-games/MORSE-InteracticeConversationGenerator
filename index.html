@@ -21,9 +21,10 @@
             font-family: Arial, sans-serif;
         }
 
-        #background-url {
+        #form input, #form select {
             width: 100%;
         }
+
 
         #drawflow {
             width: 100%;
@@ -111,6 +112,12 @@
             height: 50px;
             text-align: center;
         }
+
+        #form {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
     </style>
     <title>Chat generator</title>
 </head>
@@ -123,16 +130,26 @@
     <button class="choice" onclick="choiceNode()">Choice</button>
     <button class="option" disabled id="option-button" onclick="optionNode()">Add option</button>
     <div style="flex: 1"></div>
-    <select oninput="SELECTED_TEMPLATE = {1: CONVERSATION_TEMPLATE}[this.value]">
-        <option value="1">Template 1</option>
-    </select>
-    <label>Personal image <input type="url" id="background-url"/></label>
+    <form id="form">
+        <label>Template
+            <select name="template" id="template" oninput="SELECTED_TEMPLATE = TEMPLATES[this.value]">
+                <option value="1">Conversation</option>
+                <option value="2">WhatsApp</option>
+            </select>
+        </label>
+        <label>WPM <input name="wpm" id="wpm" type="number" step="10" value="200"></label>
+        <label>Left image <input name="bg" type="url" id="background-url"/></label>
+        <label>WhatsApp profile picture <input name="whatsapp-pfp" type="url" id="whatsapp-pfp"/></label>
+        <label>WhatsApp name <input name="whatsapp-name" type="text" id="whatsapp-name"/></label>
+    </form>
     <button onclick="window.confirm('Are you sure you want to erase everything?') ? clearFlow() : void 0">
         Clear conversation
     </button>
     <button onclick="runExport()">Export</button>
 </div>
 <script>
+    const TEMPLATES = {};
+
     let SELECTED_TEMPLATE = null;
     const id = document.getElementById('drawflow');
     const editor = new Drawflow(id);
@@ -201,6 +218,7 @@
     function saveFlow() {
         // convert string to base64
         const e = editor.export();
+        e.form = $('#form').serializeArray();
         window.location.hash = btoa(JSON.stringify(e));
     }
 
@@ -274,6 +292,8 @@
 
         console.log(triggers);
 
+        SELECTED_TEMPLATE = TEMPLATES[$('#template').val()];
+
         const rendered = SELECTED_TEMPLATE(script, triggers);
         // download rendered as html file
         downloadHTML(rendered);
@@ -293,7 +313,14 @@
     function loadFlow() {
         const b64 = window.location.hash.substring(1);
         const json = atob(b64);
-        editor.import(JSON.parse(json));
+        const parsed = JSON.parse(json);
+        const form = parsed.form;
+
+        form.forEach((f) => {
+            $(`[name="${f.name}"]`).val(f.value);
+        });
+
+        editor.import(parsed);
     }
 
     if (window.location.hash) {
@@ -316,6 +343,7 @@
         editor.on('nodeDataChanged', saveFlow);
         editor.on('connectionCreated', saveFlow);
         editor.on('connectionRemoved', saveFlow);
+        $('#form').on('change', saveFlow);
 
         // For any input field resize to grow with content
         $('#drawflow').on('input', 'input', function () {
@@ -333,9 +361,11 @@
         .then((response) => response.text())
         .then((html) => {
             // inject html into chat.html
-            CONVERSATION_TEMPLATE = (script, triggers) => {
+
+            TEMPLATES[1] = (script, triggers) => {
                 const bg =
                     document.getElementById('background-url').value || 'https://picsum.photos/400/1000';
+                const wpm = document.getElementById('wpm').value || 200;
 
                 let s = html.replace('//REPLACE HERE', script);
                 s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
@@ -343,12 +373,43 @@
                     '/* BACKGROUND HERE */',
                     `background: url(${bg}) no-repeat center center;`
                 );
+                s = s.replace('// WPM HERE', `WPM = ${wpm};`);
                 if (triggers) {
                     s = s.replace('<!-- TRIGGERS HERE -->', triggers);
                 }
                 return s;
             };
-            SELECTED_TEMPLATE = CONVERSATION_TEMPLATE;
+        });
+
+    // fetch whatsapp.html
+    fetch('whatsapp.html')
+        .then((response) => response.text())
+        .then((html) => {
+            // inject html into chat.html
+
+            TEMPLATES[2] = (script, triggers) => {
+                const bg =
+                    document.getElementById('background-url').value || 'https://picsum.photos/800/1000';
+                const wpm = document.getElementById('wpm').value || 200;
+                const whatsapp_pfp =
+                    document.getElementById('whatsapp-pfp').value ||
+                    'https://picsum.photos/50';
+                const whatsapp_name = document.getElementById('whatsapp-name').value || 'Name';
+
+                let s = html.replace('//REPLACE HERE', script);
+                s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
+                s = s.replace(
+                    '/* BACKGROUND HERE */',
+                    `background: url(${bg}) no-repeat center center;`
+                );
+                s = s.replace('// WPM HERE', `WPM = ${wpm};`);
+                s = s.replace('<!-- WHATSAPP DATA HERE -->', `<span>${whatsapp_name}</span>`);
+                s = s.replace('/* WHATSAPP PFP HERE */', `background-image: url(${whatsapp_pfp});`);
+                if (triggers) {
+                    s = s.replace('<!-- TRIGGERS HERE -->', triggers);
+                }
+                return s;
+            };
         });
 </script>
 </body>
