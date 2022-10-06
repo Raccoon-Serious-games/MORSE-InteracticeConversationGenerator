@@ -80,6 +80,11 @@
             /* WHATSAPP PFP HERE */
         }
 
+        .typing {
+            font-size: 12px;
+            font-style: italic;
+        }
+
         .chat-wrapper {
             overflow-y: scroll;
             flex: 1;
@@ -162,7 +167,10 @@
 <div class="right">
     <div class="top">
         <div class="pfp"></div>
-        <!-- WHATSAPP DATA HERE -->
+        <div class="contact">
+            <!-- WHATSAPP DATA HERE -->
+            <div class="typing">Aan het typen...</div>
+        </div>
     </div>
     <div class="chat-wrapper">
         <div class="chat"></div>
@@ -205,6 +213,7 @@
 
             $('.chat').children().last().remove();
             CHAT.append(`<div class="message outgoing">${this.message}</div>`);
+            CHAT.setTyping(this);
             setTimeout(() => {
                 CHAT.current = this;
                 CHAT.step();
@@ -280,8 +289,17 @@
             return Math.max(delay, CHAT_DELAY);
         }
 
+        setTyping(node) {
+            const $typing = $('.typing');
+            $typing.hide();
+            if (node?.next instanceof IncomingMessageNode) {
+                $typing.show();
+            }
+        }
+
         appendCurrentToChat() {
-            this.append(this.renderCurrentMessage());
+            this.append($(this.renderCurrentMessage()));
+            this.setTyping(this.current);
             const delay = this.getDelay();
             setTimeout(() => {
                 this.step();
@@ -290,7 +308,9 @@
 
         append(message) {
             $('.chat').append(message);
-            $('.chat').scrollTop($('.chat')[0].scrollHeight);
+            requestAnimationFrame(() => {
+                message[0].scrollIntoView && message[0].scrollIntoView({behavior: 'smooth'});
+            })
         }
     }
 </script>
