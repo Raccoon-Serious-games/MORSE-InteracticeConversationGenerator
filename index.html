@@ -316,7 +316,7 @@
         const parsed = JSON.parse(json);
         const form = parsed.form;
 
-        form.forEach((f) => {
+        form?.forEach((f) => {
             $(`[name="${f.name}"]`).val(f.value);
         });
 
