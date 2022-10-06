@@ -298,7 +298,7 @@
         }
 
         appendCurrentToChat() {
-            this.append($(this.renderCurrentMessage()));
+            this.append(this.renderCurrentMessage());
             this.setTyping(this.current);
             const delay = this.getDelay();
             setTimeout(() => {
@@ -307,9 +307,10 @@
         }
 
         append(message) {
+            message  = $(message);
             $('.chat').append(message);
             requestAnimationFrame(() => {
-                message[0].scrollIntoView && message[0].scrollIntoView({behavior: 'smooth'});
+                message[0].scrollIntoView({behavior: 'smooth'});
             })
         }
     }

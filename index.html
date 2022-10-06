@@ -141,6 +141,7 @@
         <label>Left image <input name="bg" type="url" id="background-url"/></label>
         <label>WhatsApp profile picture <input name="whatsapp-pfp" type="url" id="whatsapp-pfp"/></label>
         <label>WhatsApp name <input name="whatsapp-name" type="text" id="whatsapp-name"/></label>
+        <label>Conversation typewriter effect <input name="typewriter" type="checkbox" id="typewriter"/></label>
     </form>
     <button onclick="window.confirm('Are you sure you want to erase everything?') ? clearFlow() : void 0">
         Clear conversation
@@ -318,6 +319,7 @@
 
         form.forEach((f) => {
             $(`[name="${f.name}"]`).val(f.value);
+            $(`[name="${f.name}"][type="checkbox"]`).prop('checked', f.value === 'on');
         });
 
         editor.import(parsed);
@@ -366,6 +368,7 @@
                 const bg =
                     document.getElementById('background-url').value || 'https://picsum.photos/400/1000';
                 const wpm = document.getElementById('wpm').value || 200;
+                const typeW = document.getElementById('typewriter').checked || false;
 
                 let s = html.replace('//REPLACE HERE', script);
                 s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
@@ -374,6 +377,7 @@
                     `background: url(${bg}) no-repeat center center;`
                 );
                 s = s.replace('// WPM HERE', `WPM = ${wpm};`);
+                s = s.replace('// TYPEWRITER HERE', `TYPEWRITER = ${typeW};`);
                 if (triggers) {
                     s = s.replace('<!-- TRIGGERS HERE -->', triggers);
                 }
