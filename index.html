@@ -142,6 +142,7 @@
         <label>WhatsApp profile picture <input name="whatsapp-pfp" type="url" id="whatsapp-pfp"/></label>
         <label>WhatsApp name <input name="whatsapp-name" type="text" id="whatsapp-name"/></label>
         <label>Conversation typewriter effect <input name="typewriter" type="checkbox" id="typewriter"/></label>
+        <label>Click to advance <input name="clickToAdvance" type="checkbox" id="clickToAdvance"/></label>
     </form>
     <button onclick="window.confirm('Are you sure you want to erase everything?') ? clearFlow() : void 0">
         Clear conversation
@@ -368,6 +369,7 @@
                 const bg =
                     document.getElementById('background-url').value || 'https://picsum.photos/400/1000';
                 const wpm = document.getElementById('wpm').value || 200;
+                const clickToAdvance = document.getElementById('clickToAdvance').checked || false;
                 const typeW = document.getElementById('typewriter').checked || false;
 
                 let s = html.replace('//REPLACE HERE', script);
@@ -377,6 +379,7 @@
                     `background: url(${bg}) no-repeat center center;`
                 );
                 s = s.replace('// WPM HERE', `WPM = ${wpm};`);
+                s = s.replace('// CLICK_TO_ADVANCE HERE', `CLICK_TO_ADVANCE = ${clickToAdvance};`);
                 s = s.replace('// TYPEWRITER HERE', `TYPEWRITER = ${typeW};`);
                 if (triggers) {
                     s = s.replace('<!-- TRIGGERS HERE -->', triggers);
@@ -395,6 +398,7 @@
                 const bg =
                     document.getElementById('background-url').value || 'https://picsum.photos/800/1000';
                 const wpm = document.getElementById('wpm').value || 200;
+                const clickToAdvance = document.getElementById('clickToAdvance').checked || false;
                 const whatsapp_pfp =
                     document.getElementById('whatsapp-pfp').value ||
                     'https://picsum.photos/50';
@@ -407,6 +411,7 @@
                     `background: url(${bg}) no-repeat center center;`
                 );
                 s = s.replace('// WPM HERE', `WPM = ${wpm};`);
+                s = s.replace('// CLICK_TO_ADVANCE HERE', `CLICK_TO_ADVANCE = ${clickToAdvance};`);
                 s = s.replace('<!-- WHATSAPP DATA HERE -->', `<span>${whatsapp_name}</span>`);
                 s = s.replace('/* WHATSAPP PFP HERE */', `background-image: url(${whatsapp_pfp});`);
                 if (triggers) {

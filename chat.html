@@ -139,8 +139,10 @@
     const CHAT_DELAY = 2000;
     let WPM = 200;
     let TYPEWRITER = false;
+    let CLICK_TO_ADVANCE = false;
     // WPM HERE
     // TYPEWRITER HERE
+    // CLICK_TO_ADVANCE HERE
 </script>
 <script>
     class IncomingMessageNode {
@@ -190,6 +192,15 @@
     }
 </script>
 <script>
+    let timeout = null;
+
+    if (CLICK_TO_ADVANCE) {
+        $(document).on('click', () => {
+            clearTimeout(timeout);
+            CHAT.step();
+        });
+    }
+
     class Chat {
         start = null;
         current = null;
@@ -235,7 +246,7 @@
         }
 
         end() {
-            window.alert('End of chat');
+            // window.alert('End of chat');
             $(`button[buttontrigger="end-of-chat"]`).trigger('click');
         }
 
@@ -250,7 +261,7 @@
         appendCurrentToChat() {
             this.append(this.renderCurrentMessage());
             const delay = this.getDelay();
-            setTimeout(() => {
+            timeout = setTimeout(() => {
                 this.step();
             }, delay);
         }
