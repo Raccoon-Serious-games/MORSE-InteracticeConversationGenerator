@@ -322,9 +322,12 @@
         append(message) {
             message  = $(message);
             $('.chat').append(message);
-            requestAnimationFrame(() => {
-                message[0].scrollIntoView({behavior: 'smooth'});
-            })
+
+            if (this.current !== this.start) {
+                requestAnimationFrame(() => {
+                    message[0].scrollIntoView({behavior: 'smooth'});
+                });
+            }
         }
     }
 </script>

@@ -274,9 +274,12 @@
                     cursor: false,
                 })
             }
-            requestAnimationFrame(() => {
-                message[0].scrollIntoView({behavior: 'smooth'});
-            })
+
+            if (this.current !== this.start) {
+                requestAnimationFrame(() => {
+                    message[0].scrollIntoView({behavior: 'smooth'});
+                });
+            }
         }
     }
 </script>
