@@ -137,6 +137,7 @@
                 <option value="2">WhatsApp</option>
             </select>
         </label>
+        <label>Stylesheet URL <input name="stylesheet" type="url" id="stylesheet"></label>
         <label>WPM <input name="wpm" id="wpm" type="number" step="10" value="200"></label>
         <label>Left image <input name="bg" type="url" id="background-url"/></label>
         <label>WhatsApp profile picture <input name="whatsapp-pfp" type="url" id="whatsapp-pfp"/></label>
@@ -371,9 +372,13 @@
                 const wpm = document.getElementById('wpm').value || 200;
                 const clickToAdvance = document.getElementById('clickToAdvance').checked || false;
                 const typeW = document.getElementById('typewriter').checked || false;
+                const stylesheet = document.getElementById('stylesheet').value || '';
 
                 let s = html.replace('//REPLACE HERE', script);
                 s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
+                if (stylesheet) {
+                    s = s.replace('<!--  STYLESHEET HERE  -->', `<link rel="stylesheet" href="${stylesheet}">`);
+                }
                 s = s.replace(
                     '/* BACKGROUND HERE */',
                     `background: url(${bg}) no-repeat center center;`
@@ -403,6 +408,7 @@
                     document.getElementById('whatsapp-pfp').value ||
                     'https://picsum.photos/50';
                 const whatsapp_name = document.getElementById('whatsapp-name').value || 'Name';
+                const stylesheet = document.getElementById('stylesheet').value || '';
 
                 let s = html.replace('//REPLACE HERE', script);
                 s = s.replace('<!-- HASH HERE -->', `<!-- ${window.location.href} -->`);
@@ -410,6 +416,9 @@
                     '/* BACKGROUND HERE */',
                     `background: url(${bg}) no-repeat center center;`
                 );
+                if (stylesheet) {
+                    s = s.replace('<!--  STYLESHEET HERE  -->', `<link rel="stylesheet" href="${stylesheet}">`);
+                }
                 s = s.replace('// WPM HERE', `WPM = ${wpm};`);
                 s = s.replace('// CLICK_TO_ADVANCE HERE', `CLICK_TO_ADVANCE = ${clickToAdvance};`);
                 s = s.replace('<!-- WHATSAPP DATA HERE -->', `<span>${whatsapp_name}</span>`);
