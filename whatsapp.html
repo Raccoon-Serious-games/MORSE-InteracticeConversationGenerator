@@ -49,11 +49,18 @@
             background: #efeae2;
             min-width: 400px;
             border: 10px solid black;
-            border-radius: 15px;
-            margin: 5px;
-
             display: flex;
             flex-direction: column;
+        }
+
+        @media (width < 769px) {
+            .left {
+                display: none;
+            }
+
+            .right {
+                min-width: unset;
+            }
         }
 
         .top {
