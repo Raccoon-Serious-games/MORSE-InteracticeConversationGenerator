@@ -190,7 +190,7 @@
     const CHAT_DELAY = 2000;
     let WPM = 200;
     let TYPEWRITER = false;
-    let CLICK_TO_ADVANCE = false;
+    let CLICK_TO_ADVANCE = true;
     // WPM HERE
     // TYPEWRITER HERE
     // CLICK_TO_ADVANCE HERE
@@ -221,15 +221,22 @@
         }
 
         onClick() {
-            if (this.trigger) $(`button[buttontrigger="${this.trigger}"]`).trigger('click');
+            if (this.trigger) {
+                $(`button[buttontrigger="${this.trigger}"]`).trigger('click');
+                if (!this.next && CHAT.current.choices.length === 1) {
+                    return;
+                }
+            }
 
             $('.chat').children().last().remove();
             CHAT.append(`<div class="message outgoing">${this.message}</div>`);
             CHAT.setTyping(this);
             setTimeout(() => {
                 CHAT.current = this;
+            });
+            setTimeout(() => {
                 CHAT.step();
-            }, CHAT_DELAY);
+            }, CHAT.getDelay());
         }
     }
 
@@ -356,7 +363,7 @@
     m2.next = m3;
     m3.next = m4;
     c1.next = m5;
-    c2.next = m6;
+    // c2.next = m6;
     m5.next = m6.next = m7;
 
     let START = m1;
